@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Добавить отзыв</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .doctor-info {
+            background: #f5f5f5;
+            padding: 15px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+        }
+        .error {
+            color: red;
+            margin: 10px 0;
+        }
+        .success {
+            color: green;
+            margin: 10px 0;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: left;
+        }
+        th {
+            background-color: #f2f2f2;
+        }
+        textarea {
+            width: 100%;
+            padding: 10px;
+            margin: 10px 0;
+        }
+        button {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        button:hover {
+            background: #0056b3;
+        }
+    </style>
+</head>
+<body>
+    <h1>Добавить отзыв для врача</h1>
+    
+    <div class="doctor-info">
+        <h2>{{ doctor.full_name }}</h2>
+        <p><strong>Специальности:</strong> {{ specialities_text }}</p>
+    </div>
+    
+    <form id="reviewForm">
+        {% csrf_token %}
+        {{ form.as_p }}
+        <button type="submit">Отправить отзыв</button>
+    </form>
+    
+    <div id="message"></div>
+    
+    <div id="reviewsTable" style="display: none;">
+        <h3>Последние отзывы:</h3>
+        <table>
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Текст отзыва</th>
+                    <th>Дата</th>
+                </tr>
+            </thead>
+            <tbody id="reviewsBody"></tbody>
+        </table>
+    </div>
+    
+    <script>
+        document.getElementById('reviewForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const formData = new FormData(this);
+            const messageDiv = document.getElementById('message');
+            
+            fetch('', {
+                method: 'POST',
+                body: formData,
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest'
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    messageDiv.innerHTML = '<div class="success">Отзыв успешно добавлен!</div>';
+                    
+                    // Показываем таблицу с отзывами
+                    const tableDiv = document.getElementById('reviewsTable');
+                    const reviewsBody = document.getElementById('reviewsBody');
+                    
+                    tableDiv.style.display = 'block';
+                    reviewsBody.innerHTML = '';
+                    
+                    data.recent_reviews.forEach(review => {
+                        const row = document.createElement('tr');
+                        row.innerHTML = `
+                            <td>${review.id}</td>
+                            <td>${review.text}</td>
+                            <td>${review.date}</td>
+                        `;
+                        reviewsBody.appendChild(row);
+                    });
+                    
+                    // Очищаем форму
+                    document.getElementById('reviewForm').reset();
+                } else {
+                    let errorHtml = '<div class="error">';
+                    for (const field in data.errors) {
+                        errorHtml += data.errors[field].join('<br>');
+                    }
+                    errorHtml += '</div>';
+                    messageDiv.innerHTML = errorHtml;
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                messageDiv.innerHTML = '<div class="error">Ошибка при отправке формы</div>';
+            });
+        });
+    </script>
+</body>
+</html>
