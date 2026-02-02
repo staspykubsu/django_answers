@@ -1,0 +1,9 @@
+# Создание миграций
+python manage.py makemigrations reviews
+python manage.py migrate
+
+# Создание суперпользователя для админки
+python manage.py createsuperuser
+
+# Запуск сервера
+python manage.py runserver
